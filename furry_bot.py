@@ -58,15 +58,19 @@ async def suggestionReminder():
 
 
 async def setChannelForTask(channel_json_key, task_f, ctx, response):
-    with open("raposow_channel_data.json", "r") as f:
-        data = json.load(f)
-        data[channel_json_key] = ctx.channel.id
-        
-        with open("raposow_channel_data.json", "w") as f:
-            json.dump(data, f)
+    if ctx.author.resolved_permissions.administrator:
+        with open("raposow_channel_data.json", "r") as f:
+            data = json.load(f)
+            data[channel_json_key] = ctx.channel.id
+            
+            with open("raposow_channel_data.json", "w") as f:
+                json.dump(data, f)
 
-    task_f.start()
-    await ctx.send(response)
+        task_f.start()
+        await ctx.send(response)
+
+    else:
+        await ctx.send("Você não tem permissão para usar esse comando!")
 
 @furry.command()
 async def notifiqueAqui(ctx):
