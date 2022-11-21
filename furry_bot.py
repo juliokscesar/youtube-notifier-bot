@@ -58,7 +58,7 @@ async def suggestionReminder():
 
 
 async def setChannelForTask(channel_json_key, task_f, ctx, response):
-    if ctx.author.resolved_permissions.administrator:
+    if ctx.message.author.guild_permissions.administrator:
         with open("raposow_channel_data.json", "r") as f:
             data = json.load(f)
             data[channel_json_key] = ctx.channel.id
