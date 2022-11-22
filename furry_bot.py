@@ -14,6 +14,12 @@ furry = commands.Bot(command_prefix="!", description=description, intents=intent
 async def on_ready():
     print(f"Logged in as {furry.user} (ID: {furry.user.id})")
 
+    with open("raposow_channel_data.json", "r") as f:
+        data = json.load(f)
+
+        if data["notifying_channel_id"] and data["suggestions_channel_id"]:
+            await initializeTasks()
+
 @furry.command()
 async def oi(ctx):
     await ctx.send("Olá!")
@@ -56,6 +62,11 @@ async def suggestionReminder():
 
         await suggestion_channel.send("**@here UTILIZE O COMANDO:**   ,sugerir")
 
+async def initializeTasks():
+    suggestionReminder.start()
+    checkForShorts.start()
+
+    print("Successfully initialized notification and suggestion tasks")
 
 async def setChannelForTask(channel_json_key, task_f, ctx, response):
     if ctx.message.author.guild_permissions.administrator:
@@ -80,6 +91,13 @@ async def notifiqueAqui(ctx):
 async def sugestoesAqui(ctx):
     await setChannelForTask("suggestions_channel_id", suggestionReminder, ctx, f"Sugestões no canal {ctx.channel.name}")
 
+
+@furry.command()
+async def checkData(ctx):
+    if ctx.message.author.guild_permissions.administrator:
+        with open("raposow_channel_data.json", "r") as f:
+            data = json.load(f)
+            await ctx.send(data)
 
 token = os.getenv("FURRY_BOT_TOKEN")
 if not token:
