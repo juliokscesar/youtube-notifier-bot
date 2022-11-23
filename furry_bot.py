@@ -52,7 +52,7 @@ async def checkForShorts():
                 msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + latest_short_id}*\n\n||@everyone||"
                 await discord_channel.send(msg)
 
-@tasks.loop(hours=12)
+@tasks.loop(hours=24)
 async def suggestionReminder():
     with open("raposow_channel_data.json", "r") as f:
         data = json.load(f)
