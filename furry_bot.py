@@ -36,13 +36,14 @@ async def checkForShorts():
         else:
             #  Getting short's id in index 0 of the data sent by the API
             latest_short_id = channel_data.json()["items"][0]["shorts"][0]["videoId"]
-            print(f"Successfully sent GET code to API. Found last short id {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
 
             if latest_short_id == saved_data["latest_short_id"]:
                 print("No shorts posted since last notification.")
             else:
                 saved_data["latest_short_id"] = latest_short_id
                 
+                print(f"Successfully sent GET code to API. Found new Shorts. ID: {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
+
                 with open("raposow_channel_data.json", "w") as f:
                     json.dump(saved_data, f)
 
@@ -103,4 +104,5 @@ token = os.getenv("FURRY_BOT_TOKEN")
 if not token:
     raise RuntimeError("Unable to get token from environment variables.")
 
-furry.run(token)
+if __name__ == "__main__":
+    furry.run(token)
