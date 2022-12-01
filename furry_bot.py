@@ -37,9 +37,7 @@ async def checkForShorts():
             #  Getting short's id in index 0 of the data sent by the API
             latest_short_id = channel_data.json()["items"][0]["shorts"][0]["videoId"]
 
-            if latest_short_id == saved_data["latest_short_id"]:
-                print("No shorts posted since last notification.")
-            else:
+            if latest_short_id != saved_data["latest_short_id"]:
                 saved_data["latest_short_id"] = latest_short_id
                 
                 print(f"Successfully sent GET code to API. Found new Shorts. ID: {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
