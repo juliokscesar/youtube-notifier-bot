@@ -24,7 +24,7 @@ async def on_ready():
 async def oi(ctx):
     await ctx.send("Olá!")
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=40)
 async def checkForShorts():
     with open("raposow_channel_data.json", "r") as f:
         saved_data = json.load(f)
@@ -35,21 +35,24 @@ async def checkForShorts():
             print(f"Request to API returned code {channel_data.stauts_code}")
         else:
             #  Getting short's id in index 0 of the data sent by the API
-            latest_short_id = channel_data.json()["items"][0]["shorts"][0]["videoId"]
+            json_channel = channel_data.json()
+            if "items" in json_channel:
+                latest_short_id = json_channel["items"][0]["shorts"][0]["videoId"]
+                if latest_short_id != saved_data["latest_short_id"]:
+                    saved_data["latest_short_id"] = latest_short_id
+                    
+                    print(f"Successfully sent GET code to API. Found new Shorts. ID: {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
 
-            if latest_short_id != saved_data["latest_short_id"]:
-                saved_data["latest_short_id"] = latest_short_id
-                
-                print(f"Successfully sent GET code to API. Found new Shorts. ID: {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
+                    with open("raposow_channel_data.json", "w") as f:
+                        json.dump(saved_data, f)
 
-                with open("raposow_channel_data.json", "w") as f:
-                    json.dump(saved_data, f)
+                    discord_channel_id = saved_data["notifying_channel_id"]
+                    discord_channel = furry.get_channel(discord_channel_id)
 
-                discord_channel_id = saved_data["notifying_channel_id"]
-                discord_channel = furry.get_channel(discord_channel_id)
-
-                msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + latest_short_id}*\n\n||@everyone||"
-                await discord_channel.send(msg)
+                    msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + latest_short_id}*\n\n||@everyone||"
+                    await discord_channel.send(msg)
+            else:
+                print("Request to API did not return a successfull JSON")
 
 @tasks.loop(hours=24)
 async def suggestionReminder():
