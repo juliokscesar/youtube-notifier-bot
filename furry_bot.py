@@ -90,6 +90,17 @@ async def notifiqueAqui(ctx):
 async def sugestoesAqui(ctx):
     await setChannelForTask("suggestions_channel_id", suggestionReminder, ctx, f"Sugestões no canal {ctx.channel.name}")
 
+@furry.command()
+async def stopNotify(ctx):
+    if ctx.message.author.guild_permissions.administrator:
+        checkForShorts.stop()
+        print("Notification task stopped")
+
+@furry.command()
+async def stopSuggestion(ctx):
+    if ctx.message.author.guild_permissions.administrator:
+        suggestionReminder.stop()
+        print("Suggestion task stopped")
 
 @furry.command()
 async def checkData(ctx):
