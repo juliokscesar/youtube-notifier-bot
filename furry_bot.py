@@ -52,7 +52,7 @@ async def checkForShorts():
                     msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + latest_short_id}*\n\n||@everyone||"
                     await discord_channel.send(msg)
             else:
-                print("Request to API did not return a successfull JSON")
+                print("Request to API did not return a successful JSON")
 
 @tasks.loop(hours=24)
 async def suggestionReminder():
