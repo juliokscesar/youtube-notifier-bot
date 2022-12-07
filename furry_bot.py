@@ -8,19 +8,23 @@ intents = discord.Intents.default()
 intents.message_content = True
 
 description = "Bot do Raposow!"
-furry = commands.Bot(command_prefix="!", description=description, intents=intents)
+bot = commands.Bot(command_prefix="!", description=description, intents=intents)
 
-@furry.event
+@bot.event
 async def on_ready():
-    print(f"Logged in as {furry.user} (ID: {furry.user.id})")
+    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
 
     with open("raposow_channel_data.json", "r") as f:
         data = json.load(f)
 
-        if data["notifying_channel_id"] and data["suggestions_channel_id"]:
-            await initializeTasks()
+        if data["notifying_channel_id"] and (data["tasks_status"]["notification"] == 1):
+            await checkForShorts.start()
+        
+        if data["suggestions_channel_id"] and (data["tasks_status"]["suggestions"] == 1):
+            await suggestionReminder.start()
 
-@furry.command()
+
+@bot.command()
 async def oi(ctx):
     await ctx.send("Olá!")
 
@@ -43,11 +47,11 @@ async def checkForShorts():
                     
                     print(f"Successfully sent GET code to API. Found new Shorts. ID: {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
 
-                    with open("raposow_channel_data.json", "w") as f:
-                        json.dump(saved_data, f)
+                    with open("raposow_channel_data.json", "w") as f2:
+                        json.dump(saved_data, f2)
 
                     discord_channel_id = saved_data["notifying_channel_id"]
-                    discord_channel = furry.get_channel(discord_channel_id)
+                    discord_channel = bot.get_channel(discord_channel_id)
 
                     msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + latest_short_id}*\n\n||@everyone||"
                     await discord_channel.send(msg)
@@ -60,24 +64,19 @@ async def suggestionReminder():
         data = json.load(f)
 
         suggestion_channel_id = data["suggestions_channel_id"]
-        suggestion_channel = furry.get_channel(suggestion_channel_id)
+        suggestion_channel = bot.get_channel(suggestion_channel_id)
 
         await suggestion_channel.send("**@here UTILIZE O COMANDO:**   ,sugerir")
 
-async def initializeTasks():
-    suggestionReminder.start()
-    checkForShorts.start()
-
-    print("Successfully initialized notification and suggestion tasks")
-
-async def setChannelForTask(channel_json_key, task_f, ctx, response):
+async def setChannelForTask(channel_json_key, task_f, task_name_data, ctx, response):
     if ctx.message.author.guild_permissions.administrator:
         with open("raposow_channel_data.json", "r") as f:
             data = json.load(f)
             data[channel_json_key] = ctx.channel.id
+            data["tasks_status"][task_name_data] = 1
             
-            with open("raposow_channel_data.json", "w") as f:
-                json.dump(data, f)
+            with open("raposow_channel_data.json", "w") as f2:
+                json.dump(data, f2)
 
         task_f.start()
         await ctx.send(response)
@@ -85,32 +84,41 @@ async def setChannelForTask(channel_json_key, task_f, ctx, response):
     else:
         await ctx.send("Você não tem permissão para usar esse comando!")
 
-async def stopTask(task_f, ctx, responseSuccess, responseErr):
-    if ctx.message.author.guild_permissions.administrator:
-        if task_f.is_running():
-            task_f.stop()
-            print(responseSuccess)
-            await ctx.send(responseSuccess)
-        else:
-            await ctx.send(responseErr)
+async def stopTask(task_f, task_name_data, ctx, responseSuccess, responseErr):
+    with open("raposow_channel_data.json", "r") as f:
+        data = json.load(f)
 
-@furry.command()
+        if ctx.message.author.guild_permissions.administrator:
+            if task_f.is_running() and (data["tasks_status"][task_name_data] == 1):
+                task_f.stop()
+                print(responseSuccess)
+                data[task_name_data] = 0
+
+                with open("raposow_channel_data.json", "w") as f2:
+                    json.dump(data, f2)
+
+                await ctx.send(responseSuccess)
+
+            else:
+                await ctx.send(responseErr)
+
+@bot.command()
 async def notifiqueAqui(ctx):
-    await setChannelForTask("notifying_channel_id", checkForShorts, ctx, f"Notificando agora no canal \"{ctx.channel.name}\"")
+    await setChannelForTask("notifying_channel_id", checkForShorts, "notification", ctx, f"Notificando agora no canal \"{ctx.channel.name}\"")
 
-@furry.command()
+@bot.command()
 async def sugestoesAqui(ctx):
-    await setChannelForTask("suggestions_channel_id", suggestionReminder, ctx, f"Sugestões no canal {ctx.channel.name}")
+    await setChannelForTask("suggestions_channel_id", suggestionReminder, "suggestions", ctx, f"Sugestões no canal {ctx.channel.name}")
 
-@furry.command()
+@bot.command()
 async def stopNotify(ctx):
-    await stopTask(checkForShorts, ctx, "Task notificacoes foi desligada", "Task notificaces nao esta ligada")
+    await stopTask(checkForShorts, "notification", ctx, "Task notificacoes foi desligada", "Task notificaces nao esta ligada")
 
-@furry.command()
+@bot.command()
 async def stopSuggestion(ctx):
-    await stopTask(suggestionReminder, ctx, "Task sugestoes foi desligada", "Task sugestoes não está ligada")
+    await stopTask(suggestionReminder, "suggestions", ctx, "Task sugestoes foi desligada", "Task sugestoes não está ligada")
 
-@furry.command()
+@bot.command()
 async def checkData(ctx):
     if ctx.message.author.guild_permissions.administrator:
         with open("raposow_channel_data.json", "r") as f:
@@ -122,4 +130,4 @@ if not token:
     raise RuntimeError("Unable to get token from environment variables.")
 
 if __name__ == "__main__":
-    furry.run(token)
+    bot.run(token)
