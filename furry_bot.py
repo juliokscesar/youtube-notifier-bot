@@ -85,6 +85,15 @@ async def setChannelForTask(channel_json_key, task_f, ctx, response):
     else:
         await ctx.send("Você não tem permissão para usar esse comando!")
 
+async def stopTask(task_f, ctx, responseSuccess, responseErr):
+    if ctx.message.author.guild_permissions.administrator:
+        if task_f.is_running():
+            task_f.stop()
+            print(responseSuccess)
+            await ctx.send(responseSuccess)
+        else:
+            await ctx.send(responseErr)
+
 @furry.command()
 async def notifiqueAqui(ctx):
     await setChannelForTask("notifying_channel_id", checkForShorts, ctx, f"Notificando agora no canal \"{ctx.channel.name}\"")
@@ -95,15 +104,11 @@ async def sugestoesAqui(ctx):
 
 @furry.command()
 async def stopNotify(ctx):
-    if ctx.message.author.guild_permissions.administrator:
-        checkForShorts.stop()
-        print("Notification task stopped")
+    await stopTask(checkForShorts, ctx, "Task notificacoes foi desligada", "Task notificaces nao esta ligada")
 
 @furry.command()
 async def stopSuggestion(ctx):
-    if ctx.message.author.guild_permissions.administrator:
-        suggestionReminder.stop()
-        print("Suggestion task stopped")
+    await stopTask(suggestionReminder, ctx, "Task sugestoes foi desligada", "Task sugestoes não está ligada")
 
 @furry.command()
 async def checkData(ctx):
