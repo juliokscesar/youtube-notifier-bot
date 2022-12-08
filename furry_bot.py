@@ -10,6 +10,10 @@ intents.message_content = True
 description = "Bot do Raposow!"
 bot = commands.Bot(command_prefix="!", description=description, intents=intents)
 
+API_KEY = os.getenv("YOUTUBE_API_KEY")
+if not API_KEY:
+    raise RuntimeError("Unable to get API_KEY from environment variables.")
+
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})")
@@ -34,29 +38,30 @@ async def checkForShorts():
         saved_data = json.load(f)
 
         # Sending GET request to API
-        channel_data = requests.get(f"https://yt.lemnoslife.com/channels?part=shorts&id={saved_data['channel_id']}")
+        channel_data = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={API_KEY}&channelId={saved_data['channel_id']}&part=snippet,id&order=date&maxResults=5")
         if channel_data.status_code != 200:
-            print(f"Request to API returned code {channel_data.stauts_code}")
+            print(f"GET request returned code {channel_data.status_code}. Result: {channel_data.json()}")
+        
         else:
-            #  Getting short's id in index 0 of the data sent by the API
-            json_channel = channel_data.json()
-            if "items" in json_channel:
-                latest_short_id = json_channel["items"][0]["shorts"][0]["videoId"]
-                if latest_short_id != saved_data["latest_short_id"]:
-                    saved_data["latest_short_id"] = latest_short_id
-                    
-                    print(f"Successfully sent GET code to API. Found new Shorts. ID: {latest_short_id}; Title: \"{channel_data.json()['items'][0]['shorts'][0]['title']}\"")
+            json_data = channel_data.json()
+            if json_data["items"][0]["id"]["kind"] == "youtube#video":
+                videoId = json_data["items"][0]["id"]["videoId"]
 
-                    with open("raposow_channel_data.json", "w") as f2:
-                        json.dump(saved_data, f2)
+                is_shorts = requests.get(f"https://www.youtube.com/shorts/{videoId}", allow_redirects=False).status_code == 200
+                if is_shorts:
+                    if saved_data["latest_short_id"] != videoId:
+                        print(f"Successfully sent GET request to API and found new shorts. ID: {videoId}")
 
-                    discord_channel_id = saved_data["notifying_channel_id"]
-                    discord_channel = bot.get_channel(discord_channel_id)
+                        saved_data["latest_short_id"] = videoId
+                        with open("raposow_channel_data.json", "w") as f2:
+                            json.dump(saved_data, f2)
+                        
+                        discord_channel_id = saved_data["notifying_channel_id"]
+                        discord_channel = bot.get_channel(discord_channel_id)
 
-                    msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + latest_short_id}*\n\n||@everyone||"
-                    await discord_channel.send(msg)
-            else:
-                print("Request to API did not return a successful JSON")
+                        msg = f"**Raposow ACABOU de postar um shorts! Corre lá pra ver:**\n*{'https://www.youtube.com/shorts/' + videoId}*\n\n||@everyone||"
+                        await discord_channel.send(msg)
+
 
 @tasks.loop(hours=24)
 async def suggestionReminder():
