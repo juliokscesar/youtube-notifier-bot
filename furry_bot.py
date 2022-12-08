@@ -32,7 +32,7 @@ async def on_ready():
 async def oi(ctx):
     await ctx.send("Olá!")
 
-@tasks.loop(seconds=40)
+@tasks.loop(seconds=120)
 async def checkForShorts():
     with open("raposow_channel_data.json", "r") as f:
         saved_data = json.load(f)
