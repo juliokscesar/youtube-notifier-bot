@@ -1,0 +1,7 @@
+{
+  "channel_id": "CHANNEL_ID_HERE",
+  "latest_short_id": "",
+  "notifying_channel_id": 0,
+  "suggestions_channel_id": 0,
+  "tasks_status": { "notification": 1,"suggestions": 0 }
+}

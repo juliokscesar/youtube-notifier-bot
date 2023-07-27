@@ -1,1 +1,1 @@
-worker: python furry_bot.py
+worker: python youtube_notifier_bot.py
